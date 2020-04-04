@@ -1,2 +1,5 @@
 data
 .byebug_history
+credentials.json
+token.yaml
+

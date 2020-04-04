@@ -5,6 +5,8 @@
 require 'byebug'
 require 'csv'
 require 'date'
+require 'diffy'
+require './google-updater.rb'
 
 # we will iterate the dates from the beginning of the csv to the end
 # note: there are entries for "Repatriated Travellers" and "Repatriated
@@ -71,4 +73,27 @@ CSV.open(output_name, 'w') do |csv|
   output.each { |row| csv << row }
 end
 
-exec("diff #{previous_output} #{output_name}")
+# exec("diff #{previous_output} #{output_name}")
+
+diff = Diffy::Diff.new(
+  previous_output,
+  output_name,
+  source: 'files', context: 0
+)
+                  .to_s(:text)
+
+# like "+2020-04-03,107,53,1254,15,4,0,2,14,0,462,0,583,0,14,0\n"
+# TODO: handle "-" entries, in case a deletion ever happens
+unless diff.empty? # we have line(s) to add
+  puts "Update:\n#{diff}"
+
+  values = []
+  lines = diff.split("\n")
+  lines.each do |line|
+    values << line.sub(/^\+/, '').split(',').map do |value|
+      value.include?('-') ? Date.parse(value) : value.to_i
+    end
+  end
+
+  Updater.new(values)
+end
