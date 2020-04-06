@@ -84,8 +84,11 @@ diff = Diffy::Diff.new(
 
 # like "+2020-04-03,107,53,1254,15,4,0,2,14,0,462,0,583,0,14,0\n"
 # TODO: handle "-" entries, in case a deletion ever happens
-unless diff.empty? # we have line(s) to add
+if diff.empty?
+  puts 'No new data'
+else
   puts "Update:\n#{diff}"
+  puts 'Updating spreadsheet...'
 
   values = []
   lines = diff.split("\n")
