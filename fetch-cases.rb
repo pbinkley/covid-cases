@@ -20,11 +20,12 @@ source_name = "data/cases_#{timestamp.strftime('%Y-%m-%dT%H-%M-%S')}.csv"
 if File.file?(source_name)
   puts "No new version since #{source_name}"
 else
-  # remove today's entries, since the data may not be complete
-  # TODO figure out exactly what it means by today
+  # remove today's and yesterday's entries, since the data may not be complete
   today = Date.today.strftime('%d-%m-%Y')
+  yesterday = Date.today.prev_day.strftime('%d-%m-%Y')
   content = response.to_s.gsub(/\r\n?/, "\n")
                     .gsub(/^.+#{today}.+$/, '')
+                    .gsub(/^.+#{yesterday}.+$/, '')
                     .sub(/\n*\Z/, '')
 
   File.open(source_name, 'w') do |f|
