@@ -16,7 +16,9 @@ unitnames = ['alberta', 'british columbia', 'canada', 'manitoba',
              'new brunswick', 'newfoundland and labrador',
              'northwest territories', 'nova scotia', 'nunavut', 'ontario',
              'prince edward island', 'quebec', 'repatriated travellers',
-             'saskatchewan', 'yukon'].freeze
+             'saskatchewan', 'territories combined', 'yukon'].freeze
+territories = ['northwest territories', 'nunavut', 'yukon'].freeze
+top = unitnames.count - 1 # highest reference in 0-... sequence
 
 source_name = Dir.glob('data/cases_*.csv').max
 timestamp = source_name.split('_')[1]
@@ -33,18 +35,27 @@ end
 
 dates = data.group_by { |row| row['date'] }
 output = []
-prev = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+prev = Array.new(unitnames.count) { |i| 0 }
 
 dates.keys.sort.each do |date|
-  # dates[date] is an array of rows for provinces on that date
+  # dates[date] is an array of rows for provinces/other units on that date
   units = dates[date].group_by { |row| row['prname'] }
+  # calculate 'territories combined' value
+  territories_combined = 0
+  territories.each do |t|
+    territories_combined += (units[t] ? units[t].first['numtotal'].to_i : 0)
+  end
+  units['territories combined'] = [{
+    'prname' => 'territories combined',
+    'numtotal' => territories_combined.to_s
+  }]
   row = []
   unitnames.each do |unitname|
     row << (units[unitname] ? units[unitname].first['numtotal'].to_i : 0)
-  end
+  end 
   # subtract previous value, to get new cases that day
   output_row = row.dup
-  (0..14).each { |i| output_row[i] -= prev[i] }
+  (0..(unitnames.count - 1)).each { |i| output_row[i] -= prev[i] }
   output << [date] + output_row
   prev = row
 end
@@ -57,7 +68,8 @@ last = Date.parse(dates.keys.last)
   date_string = date.strftime('%Y-%m-%d')
   next if dates[date_string]
 
-  output << [date_string, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  # insert empty row for missing date: there were no cases
+  output << [date_string] + Array.new(unitnames.count) { |i| 0 }
 end
 
 # sort the added rows in
@@ -94,7 +106,7 @@ else
   lines = diff.split("\n")
   lines.each do |line|
     values << line.sub(/^\+/, '').split(',').map do |value|
-      value.include?('-') ? Date.parse(value) : value.to_i
+      value.match?(/\d-\d/) ? Date.parse(value) : value.to_i
     end
   end
 
