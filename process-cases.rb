@@ -95,7 +95,6 @@ diff = Diffy::Diff.new(
                   .to_s(:text)
 
 # like "+2020-04-03,107,53,1254,15,4,0,2,14,0,462,0,583,0,14,0\n"
-# TODO: handle "-" entries, in case a deletion ever happens
 if diff.empty?
   puts 'No new data'
 else
@@ -105,6 +104,9 @@ else
   values = []
   lines = diff.split("\n")
   lines.each do |line|
+    # ignore "-" entries
+    next if line.start_with?('-')
+
     values << line.sub(/^\+/, '').split(',').map do |value|
       value.match?(/\d-\d/) ? Date.parse(value) : value.to_i
     end
