@@ -23,9 +23,11 @@ else
   # remove today's and yesterday's entries, since the data may not be complete
   today = Date.today.strftime('%d-%m-%Y')
   yesterday = Date.today.prev_day.strftime('%d-%m-%Y')
+  prevday = Date.today.prev_day.prev_day.strftime('%d-%m-%Y')
   content = response.to_s.gsub(/\r\n?/, "\n")
                     .gsub(/^.+#{today}.+$/, '')
                     .gsub(/^.+#{yesterday}.+$/, '')
+                    .gsub(/^.+#{prevday}.+$/, '')
                     .sub(/\n*\Z/, '')
 
   File.open(source_name, 'w') do |f|
